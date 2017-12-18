@@ -10,4 +10,9 @@
         paint.setAntiAlias(true);
         paint.setFilterBitmap(true);
 ```
++ SurfaceViewの方は、加えてPixelFormatを下記のように変更してあります。
+```
+getHolder().setFormat(PixelFormat.RGBA_8888);
+```
++ SurfaceViewの方は回転アニメーションします。
 
