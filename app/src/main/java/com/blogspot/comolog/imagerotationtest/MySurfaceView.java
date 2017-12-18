@@ -1,7 +1,6 @@
 package com.blogspot.comolog.imagerotationtest;
 
 import android.content.Context;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -9,9 +8,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 
 /**
  * Created by Akihiro Komori on 2017/12/17.
@@ -21,6 +23,32 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
 
     private Paint paint;
     private Bitmap bitmap;
+
+    private boolean isRunning;
+    private float angle = 0.0f;
+    private Thread thread;
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            long lastTime = System.currentTimeMillis();
+            while(isRunning) {
+                long now = System.currentTimeMillis();
+                long dt = now - lastTime;
+                lastTime = now;
+
+                SurfaceHolder holder = getHolder();
+                Canvas canvas = holder.lockCanvas();
+                customDraw(canvas, angle);
+                angle += dt / 300.0f;
+                angle = angle % 360.0f;
+                holder.unlockCanvasAndPost(canvas);
+
+                Log.v(MySurfaceView.class.getSimpleName(), "dt: " + dt);
+
+                Thread.yield();
+            }
+        }
+    };
 
     public MySurfaceView(Context context) {
         super(context);
@@ -40,13 +68,22 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
         getHolder().addCallback(this);
     }
 
+    @Override
+    protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        if (visibility != View.VISIBLE) {
+            pause();
+        }
+    }
+
     private void init() {
-        getHolder().setFormat(PixelFormat.RGBX_8888);
+        Log.v(MySurfaceView.class.getSimpleName(), "PixelFormat: " + getHolder());
+
+        getHolder().setFormat(PixelFormat.RGBA_8888);
 
         paint = new Paint();
         paint.setAntiAlias(true);
         paint.setFilterBitmap(true);
-//        paint.setDither(true);
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
@@ -62,27 +99,31 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
             }
         }
         bitmap = BitmapFactory.decodeResource(getResources(),R.drawable.from_hill, options);
+
+        thread = new Thread(runnable);
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
-        Canvas canvas = holder.lockCanvas();
-        customDraw(canvas);
-        holder.unlockCanvasAndPost(canvas);
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        Canvas canvas = holder.lockCanvas();
-        customDraw(canvas);
-        holder.unlockCanvasAndPost(canvas);
+        if (!isRunning) {
+            isRunning = true;
+            thread.start();
+        }
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
-
+        isRunning = false;
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void customDraw(Canvas canvas) {
+    private void customDraw(Canvas canvas, float angle) {
 
-//        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         paint.setColor(Color.WHITE);
         paint.setStyle(Paint.Style.FILL);
         canvas.drawPaint(paint);
@@ -94,7 +135,7 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
         int hw = canvas.getWidth() / 2;
         int hh = canvas.getHeight() / 2;
         canvas.translate(hw, hh);
-        canvas.rotate(15);
+        canvas.rotate(angle);
         canvas.translate(-hw, -hh);
         if (bitmap.getWidth() > canvas.getWidth() ||  bitmap.getHeight() > canvas.getHeight()) {
             float sw = (float)bitmap.getWidth() / (float)canvas.getWidth();
@@ -116,13 +157,12 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
         }
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            invalidate();
-        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            invalidate();
+    public void pause() {
+        isRunning = false;
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

@@ -21,8 +21,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        ((MySurfaceView)view2).pause();
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Log.v("MainActivity", event.toString());
         if (event.getAction() == MotionEvent.ACTION_UP) {
             if (view.getVisibility() == View.VISIBLE) {
                 view.setVisibility(View.INVISIBLE);

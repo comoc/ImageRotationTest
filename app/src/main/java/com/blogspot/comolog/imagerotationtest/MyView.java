@@ -63,7 +63,6 @@ public class MyView extends View {
 
         super.onDraw(canvas);
 
-//        canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         paint.setColor(Color.WHITE);
         paint.setStyle(Paint.Style.FILL);
         canvas.drawPaint(paint);
