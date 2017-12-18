@@ -40,6 +40,7 @@ public class MyView extends View {
         paint = new Paint();
         paint.setAntiAlias(true);
         paint.setFilterBitmap(true);
+//        paint.setDither(true);
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;

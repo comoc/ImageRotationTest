@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
@@ -40,10 +41,12 @@ public class MySurfaceView extends SurfaceView implements SurfaceHolder.Callback
     }
 
     private void init() {
+        getHolder().setFormat(PixelFormat.RGBX_8888);
 
         paint = new Paint();
         paint.setAntiAlias(true);
         paint.setFilterBitmap(true);
+//        paint.setDither(true);
 
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
